@@ -479,52 +479,6 @@ def helix(ctx, cx, cy, L, t, a, gap=0.0, amp=30, wl=150):
         x += 16
 
 
-def capillary_h(ctx, x0, x1, y, h, t, a, dead=0.0, seed=0, flow=True):
-    """Capillary seen lengthwise: two walls lined with endothelial cells."""
-    if a <= 0.003:
-        return
-    rnd = random.Random(seed)
-    for side in (-1, 1):
-        yy = y + side * h / 2
-        ctx.move_to(x0, yy)
-        ctx.line_to(x1, yy)
-        gstroke(ctx, VES_C, 2.4, a * 0.85, glow=0.7)
-    n = int((x1 - x0) / 74)
-    for k in range(n):
-        for side in (-1, 1):
-            ex = x0 + 37 + k * 74
-            ey = y + side * (h / 2 - 11)
-            die = clamp(dead * 1.6 - rnd.random() * 0.9)
-            if die > 0.95:
-                for q in range(4):
-                    ang = q * 1.57 + k
-                    glow_dot(ctx, ex + math.cos(ang) * 18 * die, ey + math.sin(ang) * 6, 6,
-                             GREY_C, a * 0.6 * (1.2 - die))
-                continue
-            sc = 1 - 0.45 * die
-            ctx.save()
-            ctx.translate(ex, ey)
-            ctx.scale(sc, 0.34 * sc)
-            ctx.arc(0, 0, 32, 0, 2 * math.pi)
-            ctx.restore()
-            ec = lerp3(ENDO_C, GREY_C, die)
-            ctx.set_source_rgba(*ec, 0.18 * a)
-            ctx.fill_preserve()
-            gstroke(ctx, ec, 1.8, a, glow=0.4)
-            glow_dot(ctx, ex, ey, 8, ec, a * 0.7)
-    if flow:
-        for k in range(7):
-            ph = (t * 0.12 + k / 7) % 1
-            rx = lerp(x0 + 20, x1 - 20, ph)
-            ctx.save()
-            ctx.translate(rx, y + 6 * math.sin(k * 2.0 + t))
-            ctx.scale(1.0, 0.6)
-            ctx.arc(0, 0, 13, 0, 2 * math.pi)
-            ctx.restore()
-            ctx.set_source_rgba(*VES_C, 0.45 * a * (1 - dead * 0.5))
-            ctx.fill()
-
-
 def spindle(ctx, x, y, L, rot, c, a, act=0.0):
     """Fibroblast: a spindle-shaped cell; `act` makes it brighter and bigger."""
     if a <= 0.003:
@@ -648,62 +602,6 @@ def icon_person(ctx, c, a, hl=None):
         glow_dot(ctx, 40, -50, 50, hl, a * 0.40)
 
 
-def icon_mouse(ctx, c, a):
-    ctx.save()
-    ctx.scale(1.0, 0.62)
-    ctx.arc(0, 0, 80, 0, 2 * math.pi)
-    ctx.restore()
-    ctx.set_source_rgba(*c, 0.08 * a)
-    ctx.fill_preserve()
-    gstroke(ctx, c, 3.0, a)
-    ctx.arc(-58, -44, 22, 0, 2 * math.pi)
-    gstroke(ctx, c, 2.6, a)
-    glow_dot(ctx, -76, -8, 6, c, a)
-    ctx.move_to(80, 10)
-    ctx.curve_to(130, 30, 140, -40, 180, -20)
-    gstroke(ctx, c, 2.6, a)
-
-
-def icon_gauge(ctx, c, a, v=0.7):
-    ctx.arc(0, 20, 80, math.pi, 2 * math.pi)
-    gstroke(ctx, c, 3.0, a)
-    ang = math.pi + v * math.pi
-    ctx.move_to(0, 20)
-    ctx.line_to(math.cos(ang) * 64, 20 + math.sin(ang) * 64)
-    gstroke(ctx, c, 4.0, a)
-    glow_dot(ctx, 0, 20, 12, c, a)
-
-
-def icon_fractions(ctx, c, a):
-    for k in range(5):
-        rrect(ctx, -90 + k * 38, -50, 24, 100, 6)
-        ctx.set_source_rgba(*c, 0.18 * a)
-        ctx.fill_preserve()
-        gstroke(ctx, c, 2.4, a)
-
-
-def icon_target(ctx, c, a):
-    for rr in (80, 52, 24):
-        ctx.arc(0, 0, rr, 0, 2 * math.pi)
-        gstroke(ctx, c, 2.4, a)
-    glow_dot(ctx, 0, 0, 14, c, a)
-
-
-def icon_clock(ctx, c, a, t=0.0):
-    ctx.arc(0, 0, 80, 0, 2 * math.pi)
-    gstroke(ctx, c, 3.0, a)
-    for k in range(12):
-        ang = k * math.pi / 6
-        ctx.move_to(math.cos(ang) * 68, math.sin(ang) * 68)
-        ctx.line_to(math.cos(ang) * 76, math.sin(ang) * 76)
-        gstroke(ctx, c, 1.8, a * 0.7, glow=0)
-    for L, sp in ((46, 0.08), (62, 0.9)):
-        ang = t * sp - math.pi / 2
-        ctx.move_to(0, 0)
-        ctx.line_to(math.cos(ang) * L, math.sin(ang) * L)
-        gstroke(ctx, c, 3.0, a)
-
-# ------------------------------------------------------------ background ----
 class Particles:
     def __init__(self, seed):
         rnd = random.Random(seed)
@@ -812,10 +710,10 @@ def draw_light_leaks(ctx, t):
 
 
 GROUPS = {
-    "hook": "hook", "title": "title", "ionize": "ionize", "dsb": "dsb", "ros": "ros",
-    "fibers": "fibers", "beyond": "beyond", "vessel": "vessel", "hypoxia": "hypoxia",
-    "fibrosis": "fibrosis", "remodel": "remodel", "clinic": "clinic", "cascade": "cascade",
-    "whole": "whole", "directions": "directions", "reality": "reality", "end": "end", "refs": "refs",
+    "title": "title", "dnaros": "dnaros", "fate": "fate", "fibers": "fibers", "reserve": "reserve",
+    "fap": "fap", "secretome": "secretome", "scseq": "scseq", "tgfb": "tgfb", "mito": "mito",
+    "monkey": "monkey", "clinic": "clinic", "cascade": "cascade", "directions": "directions",
+    "end": "end", "refs": "refs",
 }
 PROT_C = (1.00, 0.76, 0.40)
 
@@ -912,34 +810,6 @@ def line_dur(g, i=0):
     return g["lines"][i]["end"] - g["lines"][i]["start"]
 
 
-def draw_hook(ctx, gt, g, a, acc, t):
-    dur = line_dur(g)
-    k = smooth(gt / 1.2)
-    dmg = smooth((gt - 2.2) / 3.0)
-    ys = [380 + i * 70 for i in range(6)]
-    for i, y in enumerate(ys):
-        x0 = 860 + 18 * math.sin(i * 1.7)
-        fiber_long(ctx, x0, x0 + 860, y, 54, t, a * k, dmg * (0.4 + 0.6 * ((i * 37) % 5) / 4), seed=i)
-    for i in range(3):
-        p = (gt - 0.6 - i * 0.35) / 1.4
-        wave_ray(ctx, 900 + i * 260, 150, 1060 + i * 260, 420, ease_io(p), a * (1 - smooth((gt - 2.6) / 0.8)),
-                 t=t)
-    if dmg > 0:
-        rnd = random.Random(3)
-        for j in range(28):
-            x, y = rnd.uniform(880, 1700), rnd.uniform(400, 720)
-            wavy_line(ctx, x - 40, y, x + 40, y + rnd.uniform(-8, 8), 4, 18, j)
-            gstroke(ctx, COLL_C, 1.6, a * 0.55 * dmg, glow=0.3)
-    blit_reveal(ctx, text("放疗之后很久……", "serif", 64, WHITE, tracking=4), 470, 420,
-                ease_out((gt - 0.3) / 1.4), a)
-    blit_reveal(ctx, text("LONG AFTER RADIOTHERAPY", "sans_light", 24, SOFT, tracking=7), 470, 490,
-                ease_out((gt - 0.5) / 1.4), a)
-    kq = ease_out((gt - dur * 0.55) / 1.0)
-    blit_reveal(ctx, text("又僵 · 又弱", "serif_bold", 76, acc, tracking=10), 470, 620, kq, a)
-    blit_reveal(ctx, text("STIFF  ·  WEAK", "sans_light", 24, SOFT, tracking=8), 470, 690, kq, a)
-    blit(ctx, text("?", "serif_bold", 120, acc), 1300, 230, a * smooth((gt - dur * 0.85) / 0.6))
-
-
 def draw_title(ctx, gt, g, a, acc, t):
     k = smooth(gt / 1.4)
     SECTION.draw(ctx, 1400, 470, t, a * k, dmg=0.0, scale=0.95)
@@ -956,103 +826,6 @@ def draw_title(ctx, gt, g, a, acc, t):
                           tracking=6), 600, 630, ease_out((gt - 2.0) / 1.6), a)
     blit(ctx, text("骨骼肌横截面  ·  muscle cross-section", "sans_light", 20, SOFT, tracking=2), 1400, 800,
          a * smooth((gt - 1.5) / 1.0))
-
-
-def draw_ionize(ctx, gt, g, a, acc, t):
-    dur = line_dur(g)
-    heading(ctx, gt, a, "高能射线把电子“打飞”", "KNOCKING ELECTRONS LOOSE")
-    ax, ay = 1150, 540
-    k = smooth(gt / 1.0)
-    hit = dur * 0.45
-    hk = smooth((gt - hit) / 0.4)
-    glow_dot(ctx, ax, ay, 46, lerp3((1.0, 0.85, 0.6), ROS_C, hk), a * k)
-    for i, rot in enumerate((0.3, -0.5, 1.4)):
-        ctx.save()
-        ctx.translate(ax, ay)
-        ctx.rotate(rot)
-        ctx.scale(1.0, 0.38)
-        ctx.arc(0, 0, 190, 0, 2 * math.pi)
-        ctx.restore()
-        gstroke(ctx, SOFT, 1.4, a * k * 0.55, glow=0)
-        ang = t * (0.9 + 0.3 * i) + i * 2.1
-        ex, ey = math.cos(ang) * 190, math.sin(ang) * 190 * 0.38
-        rx, ry = ex * math.cos(rot) - ey * math.sin(rot), ex * math.sin(rot) + ey * math.cos(rot)
-        if i == 0 and hk > 0:
-            fly = ease_out((gt - hit) / 2.2)
-            rx, ry = rx + 520 * fly, ry - 260 * fly
-        glow_dot(ctx, ax + rx, ay + ry, 22, DNA_A, a * k)
-    wave_ray(ctx, 200, 760, ax - 20, ay + 10, ease_io((gt - 0.6) / (hit - 0.6)), a * (1 - hk), t=t)
-    blit(ctx, text("+", "sans_med", 54, WHITE), ax, ay - 4, a * hk)
-    label_pair(ctx, 400, 520, "X射线 / γ射线", "X-rays / gamma rays", a * smooth((gt - 0.6) / 0.8), 38, 22,
-               zc=RAY_C)
-    kr = ease_out((gt - hit - 0.4) / 1.0)
-    label_pair(ctx, 1640, 300, "电子被打飞", "Electron ejected", a * kr, 34, 20, zc=DNA_A)
-    label_pair(ctx, ax, ay + 240, "分子被“电离”", "The molecule is ionized", a * kr, 36, 22, zc=acc)
-
-
-def draw_dsb(ctx, gt, g, a, acc, t):
-    dur = line_dur(g)
-    heading(ctx, gt, a, "DNA 双链断裂", "DNA DOUBLE-STRAND BREAK")
-    cx, cy = 960, 520
-    k = smooth(gt / 1.0)
-    hit = 1.4
-    brk = ease_out((gt - hit) / 0.8)
-    helix(ctx, cx, cy, 1300, t * 0.3, a * k, gap=110 * brk)
-    wave_ray(ctx, cx - 300, 160, cx, cy - 10, ease_io((gt - 0.3) / (hit - 0.3)), a * (1 - brk), t=t)
-    if brk > 0:
-        spark(ctx, cx, cy, 46 * (1 - 0.5 * brk), ROS_C, a * (1 - smooth((gt - hit - 1.2) / 1.0)))
-    resp = smooth((gt - dur * 0.45) / 1.2)
-    if resp > 0:
-        for j in range(10):
-            side = -1 if j % 2 else 1
-            ang = j * 0.7 + t * 0.5
-            rr = 40 + 18 * math.sin(t * 1.1 + j)
-            x = cx + side * (70 + 10 * (j % 3)) + math.cos(ang) * rr * (1 - 0.6 * resp)
-            y = cy + math.sin(ang) * rr
-            glow_dot(ctx, x, y, 18, PROT_C, a * resp)
-        label_pair(ctx, cx, cy + 210, "细胞启动“损伤应答”", "Cells mount a DNA-damage response", a * resp, 38, 22,
-                   zc=PROT_C)
-    label_pair(ctx, cx + 420, cy - 150, "两条链同时断开", "Both strands broken", a * brk, 32, 20,
-               zc=ROS_C)
-
-
-def draw_ros(ctx, gt, g, a, acc, t):
-    dur = line_dur(g)
-    heading(ctx, gt, a, "活性氧：持续的氧化损伤", "REACTIVE OXYGEN SPECIES")
-    k = smooth(gt / 0.8)
-    rnd = random.Random(21)
-    pts = [(rnd.uniform(260, 1660), rnd.uniform(330, 720), rnd.uniform(0, 6.28)) for _ in range(34)]
-    sweep = ease_io((gt - 0.2) / 1.6)
-    wave_ray(ctx, 150, 520, 1780, 520, sweep, a * (1 - smooth((gt - 1.9) / 0.6)), t=t, amp=18)
-    for i, (x, y, ph) in enumerate(pts):
-        lit = smooth((sweep * 1700 + 150 - x) / 120)
-        if lit < 1:
-            ctx.arc(x, y, 9, 0, 2 * math.pi)
-            gstroke(ctx, O2_C, 1.6, a * k * 0.6 * (1 - lit), glow=0)
-            for s in (-1, 1):
-                ctx.arc(x + s * 13, y - 9, 5, 0, 2 * math.pi)
-                gstroke(ctx, O2_C, 1.2, a * k * 0.5 * (1 - lit), glow=0)
-        if lit > 0:
-            dx = 18 * math.sin(t * 0.7 + ph)
-            spark(ctx, x + dx, y + 10 * math.cos(t * 0.6 + ph), 15 + 4 * math.sin(t * 3 + ph), ROS_C,
-                  a * lit * (0.65 + 0.35 * math.sin(t * 2.5 + ph)), rot=t + ph)
-    blit(ctx, text("H2O  →  ·OH  ·  H2O2  ·  O2·-", "sans_light", 28, SOFT, tracking=3), 960, 290,
-         a * smooth((gt - 1.2) / 0.8))
-    kb = ease_out((gt - dur * 0.45) / 1.0)
-    if kb > 0:
-        x0, x1, y = 460, 1460, 800
-        ctx.move_to(x0, y)
-        ctx.line_to(x1, y)
-        gstroke(ctx, SOFT, 1.6, a * kb * 0.4, glow=0)
-        ctx.move_to(x0, y)
-        ctx.line_to(x0 + 70, y)
-        gstroke(ctx, RAY_C, 6, a * kb)
-        ctx.move_to(x0, y)
-        ctx.line_to(lerp(x0, x1, kb), y)
-        gstroke(ctx, ROS_C, 2.6, a * kb * 0.8, glow=0.6)
-        blit(ctx, text("照射  exposure", "sans_light", 18, RAY_C), x0 + 35, y - 26, a * kb)
-        blit(ctx, text("氧化损伤拖得更久  ·  oxidative injury persists", "sans_light", 22, ROS_C, tracking=1),
-             lerp(x0, x1, 0.62), y - 28, a * kb)
 
 
 def draw_fibers(ctx, gt, g, a, acc, t):
@@ -1081,135 +854,6 @@ def draw_fibers(ctx, gt, g, a, acc, t):
         blit(ctx, text("regeneration impaired", "sans_light", 20, SOFT, tracking=2), x, y + 26, a * kr)
 
 
-def draw_beyond(ctx, gt, g, a, acc, t):
-    heading(ctx, gt, a, "不只是肌肉细胞", "BEYOND THE FIBERS", y=190)
-    k = smooth(gt / 1.0)
-    z = lerp(1.6, 0.95, ease_io(gt / 2.0))
-    cx, cy = 960, 540
-    SECTION.draw(ctx, cx, cy, t, a * k, scale=z, hi={"cap": 0.6 * smooth((gt - 0.6) / 0.6),
-                                                      "fibro": 0.6 * smooth((gt - 0.9) / 0.6)})
-    kl = ease_out((gt - 1.0) / 0.9)
-    for (lx, ly, zh, en, c) in ((420, 420, "微血管", "Microvessels", VES_C),
-                                (1500, 420, "成纤维细胞", "Fibroblasts", FIB_C),
-                                (1500, 680, "免疫细胞", "Immune cells", IMM_C),
-                                (420, 680, "卫星细胞", "Satellite cells", SAT_C)):
-        label_pair(ctx, lx, ly, zh, en, a * kl, 34, 20, zc=c)
-    immune(ctx, cx + 230, cy + 170, 26, t, a * kl, seed=4)
-
-
-def draw_vessel(ctx, gt, g, a, acc, t):
-    dur = line_dur(g)
-    heading(ctx, gt, a, "微血管内皮：可能最先受伤", "MICROVASCULAR ENDOTHELIUM")
-    k = smooth(gt / 1.0)
-    dead = smooth((gt - dur * 0.45) / 2.2)
-    capillary_h(ctx, 200, 1720, 470, 170, t, a * k, dead=dead, seed=3)
-    for i in range(3):
-        wave_ray(ctx, 420 + i * 420, 200, 560 + i * 420, 380, ease_io((gt - 0.8 - i * 0.3) / 1.2),
-                 a * (1 - smooth((gt - 2.6) / 0.6)), t=t)
-    label_pair(ctx, 960, 610, "血管内皮细胞", "Endothelial cells lining the vessel", a * k * (1 - dead), 32, 20,
-               zc=ENDO_C)
-    label_pair(ctx, 960, 610, "内皮细胞凋亡 → 早期关键环节", "Endothelial apoptosis: a key early step", a * dead,
-               34, 20, zc=acc)
-    kb = smooth((gt - dur * 0.35) / 0.8)
-    glass_panel(ctx, 960 - 360, 680, 720, 80, 20, a * kb, (1.0, 0.75, 0.45), 0.6)
-    blit(ctx, text("小鼠实验 · 肠道组织（不是肌肉）", "sans_med", 26, (1.0, 0.82, 0.62), tracking=1), 960, 706,
-         a * kb)
-    blit(ctx, text("IN MICE  ·  INTESTINE, NOT MUSCLE  ·  ANALOGY FOR MICROVASCULAR INJURY", "sans_light",
-                   15, SOFT, tracking=2), 960, 738, a * kb)
-
-
-def draw_hypoxia(ctx, gt, g, a, acc, t):
-    dur = line_dur(g)
-    k = smooth(gt / 0.8)
-    loss = smooth((gt - 0.3) / max(1.5, dur * 0.6))
-    rnd = random.Random(9)
-    segs = []
-    for i in range(7):
-        y = 300 + i * 70
-        xs = [200 + j * 190 for j in range(9)]
-        for j in range(len(xs) - 1):
-            segs.append((xs[j], y + rnd.uniform(-20, 20), xs[j + 1], y + rnd.uniform(-20, 20), rnd.random()))
-    for (x0, y0, x1, y1, r) in segs:
-        alive = 1 - smooth((loss - r * 0.75) / 0.25)
-        ctx.move_to(x0, y0)
-        ctx.curve_to(lerp(x0, x1, 0.4), y0 - 18, lerp(x0, x1, 0.6), y1 + 18, x1, y1)
-        gstroke(ctx, lerp3(VES_C, GREY_C, 1 - alive), 2.4, a * k * (0.25 + 0.75 * alive), glow=0.6 * alive)
-    for j in range(46):
-        x, y = rnd.uniform(220, 1700), rnd.uniform(280, 740)
-        o2 = 1 - loss * (0.85 if rnd.random() < 0.8 else 0.2)
-        glow_dot(ctx, x + 6 * math.sin(t + j), y, 9, O2_C, a * k * 0.8 * o2)
-    inf = smooth((gt - dur * 0.55) / 1.0)
-    for j, (x, y) in enumerate(((520, 430), (980, 600), (1380, 380), (760, 700), (1560, 640))):
-        immune(ctx, x, y, 30 + 4 * math.sin(t * 2 + j), t, a * inf, seed=30 + j)
-        ctx.arc(x, y, 50 + 14 * ((t * 0.6 + j * 0.3) % 1), 0, 2 * math.pi)
-        gstroke(ctx, ROS_C, 1.4, a * inf * 0.4, glow=0)
-    for i, (zh, en, c, kk) in enumerate((("毛细血管减少", "Capillary loss", VES_C, ease_out((gt - 0.3) / 0.8)),
-                                         ("局部缺氧", "Hypoxia", O2_C, ease_out((gt - dur * 0.3) / 0.8)),
-                                         ("慢性炎症", "Chronic inflammation", IMM_C, inf))):
-        label_pair(ctx, 520 + i * 440, 210, zh, en, a * kk, 36, 20, zc=c)
-
-
-def draw_fibrosis(ctx, gt, g, a, acc, t):
-    dur = line_dur(g)
-    k = smooth(gt / 0.8)
-    act = smooth((gt - 0.5) / 1.4)
-    coll = smooth((gt - 1.4) / max(1.5, dur * 0.55))
-    rnd = random.Random(12)
-    fb = [(rnd.uniform(300, 1300), rnd.uniform(320, 720), rnd.uniform(0, 3.14)) for _ in range(7)]
-    for j in range(int(120 * coll)):
-        x, y = rnd.uniform(240, 1360), rnd.uniform(300, 740)
-        ang = rnd.uniform(-0.4, 0.4)
-        L = rnd.uniform(60, 140)
-        wavy_line(ctx, x - math.cos(ang) * L / 2, y - math.sin(ang) * L / 2,
-                  x + math.cos(ang) * L / 2, y + math.sin(ang) * L / 2, 4, 22, j)
-        gstroke(ctx, COLL_C, 1.8, a * 0.55, glow=0.3)
-    for j, (x, y, rot) in enumerate(fb):
-        spindle(ctx, x, y, 110, rot + 0.1 * math.sin(t * 0.5 + j), FIB_C, a * k, act=act)
-        if act > 0:
-            for q in range(3):
-                ph = (t * 0.4 + q / 3 + j * 0.13) % 1
-                glow_dot(ctx, x + math.cos(q * 2 + j) * (40 + 60 * ph), y + math.sin(q * 2 + j) * (40 + 60 * ph),
-                         9, acc, a * act * (1 - ph))
-    blit(ctx, text("TGF-β 信号", "sans_med", 24, acc, tracking=2), 800, 270, a * act)
-    gx, gy = 1600, 520
-    rrect(ctx, gx - 30, gy - 200, 60, 400, 30)
-    gstroke(ctx, SOFT, 2.0, a * k * 0.6, glow=0)
-    lv = 0.1 + 0.85 * coll
-    rrect(ctx, gx - 22, gy + 192 - 384 * lv, 44, 384 * lv, 22)
-    ctx.set_source_rgba(*lerp3(FIB_C, ROS_C, coll), 0.55 * a * k)
-    ctx.fill()
-    label_pair(ctx, gx, gy + 260, "组织硬度", "Tissue stiffness", a * k, 30, 18)
-    for i, (zh, en, c, kk) in enumerate((("成纤维细胞激活", "Fibroblasts activate", FIB_C, act),
-                                         ("胶原沉积", "Collagen builds up", COLL_C, coll),
-                                         ("纤维化", "Fibrosis", acc, smooth((gt - dur * 0.75) / 0.8)))):
-        label_pair(ctx, 420 + i * 380, 830, zh, en, a * kk, 34, 20, zc=c)
-
-
-def draw_remodel(ctx, gt, g, a, acc, t):
-    dur = line_dur(g)
-    heading(ctx, gt, a, "晚期副作用的逻辑", "THE LOGIC OF LATE EFFECTS")
-    x0, x1, y = 300, 1620, 530
-    k = ease_out((gt - 0.3) / 0.8)
-    prog = ease_io((gt - 1.0) / max(2.0, dur * 0.75))
-    ctx.move_to(x0, y)
-    ctx.line_to(x1, y)
-    gstroke(ctx, SOFT, 2.0, a * k * 0.35, glow=0)
-    px = lerp(x0, x1, prog)
-    wavy_line(ctx, x0, y, px, y, 10, 60, -t * 2)
-    gstroke(ctx, acc, 3.0, a * k, glow=0.8)
-    glow_dot(ctx, px, y, 30, acc, a * k * smooth(prog * 5))
-    stops = ((x0, "早期损伤", "Early damage", "数天–数周 · days–weeks", ROS_C, 0.0),
-             ((x0 + x1) / 2, "漫长的组织重塑", "Long tissue remodeling", "数月–数年 · months–years", FIB_C, 0.4),
-             (x1, "永久改变", "Lasting change", "", acc, 0.92))
-    for (sx, zh, en, sub, c, th) in stops:
-        kk = smooth((prog - th) / 0.08) if th > 0 else k
-        ctx.arc(sx, y, 12, 0, 2 * math.pi)
-        gfill(ctx, c, a * kk)
-        label_pair(ctx, sx, y - 110, zh, en, a * kk, 36, 20, zc=c)
-        if sub:
-            blit(ctx, text(sub, "sans_light", 20, SOFT, tracking=1), sx, y + 60, a * kk)
-
-
 def draw_clinic(ctx, gt, g, a, acc, t):
     dur = line_dur(g)
     k = smooth(gt / 1.0)
@@ -1226,11 +870,425 @@ def draw_clinic(ctx, gt, g, a, acc, t):
         label_pair(ctx, 1220, y - 10, zh, en, a * kk, 36, 20, zc=acc)
 
 
-CASCADE = (("DNA与氧化损伤", "DNA & oxidative injury", ROS_C, "DNA与"),
-           ("细胞死亡或衰老", "Cell death or senescence", GREY_C, "细胞死亡"),
-           ("干细胞微环境被打乱", "Stem-cell niche disrupted", SAT_C, "干细胞微"),
-           ("血管与炎症重塑", "Vascular & inflammatory remodeling", VES_C, "血管与"),
-           ("纤维化与长期功能障碍", "Fibrosis & lasting dysfunction", FIB_C, "纤维化与"))
+SEN_C = (0.90, 0.78, 0.60)
+MITO_C = (1.00, 0.66, 0.42)
+
+
+def model_tag(ctx, zh, en, a, x=960, y=800, c=(1.0, 0.80, 0.60)):
+    """Small pill naming the study model (mouse / rat / macaque) so animal data is always marked."""
+    if a <= 0.003:
+        return
+    tz = text(zh, "sans_med", 22, c, tracking=1)
+    te = text(en, "sans_light", 15, SOFT, tracking=3)
+    w = max(tz.tw, te.tw) - 20
+    glass_panel(ctx, x - w / 2, y - 34, w, 68, 18, a, c, 0.55)
+    blit(ctx, tz, x, y - 10, a)
+    blit(ctx, te, x, y + 16, a)
+
+
+def icon_monkey(ctx, c, a):
+    for s in (-1, 1):
+        ctx.arc(s * 96, -6, 34, 0, 2 * math.pi)
+        ctx.set_source_rgba(*c, 0.10 * a)
+        ctx.fill_preserve()
+        gstroke(ctx, c, 2.6, a)
+    ctx.arc(0, 0, 90, 0, 2 * math.pi)
+    ctx.set_source_rgba(*c, 0.08 * a)
+    ctx.fill_preserve()
+    gstroke(ctx, c, 3.0, a)
+    for s in (-1, 1):
+        ctx.save()
+        ctx.translate(s * 30, -20)
+        ctx.scale(1.0, 0.8)
+        ctx.arc(0, 0, 30, 0, 2 * math.pi)
+        ctx.restore()
+        gstroke(ctx, c, 2.0, a * 0.8, glow=0)
+        glow_dot(ctx, s * 30, -20, 7, c, a)
+    ctx.save()
+    ctx.translate(0, 38)
+    ctx.scale(1.0, 0.62)
+    ctx.arc(0, 0, 44, 0, 2 * math.pi)
+    ctx.restore()
+    gstroke(ctx, c, 2.2, a * 0.85, glow=0)
+    ctx.move_to(-16, 46)
+    ctx.curve_to(-6, 54, 6, 54, 16, 46)
+    gstroke(ctx, c, 2.0, a * 0.8, glow=0)
+
+
+def mitochondrion(ctx, x, y, w, h, c, a, swell=0.0, t=0.0):
+    if a <= 0.003:
+        return
+    hh = h * (1 + 0.8 * swell)
+    ww = w * (1 + 0.12 * swell)
+    ctx.save()
+    ctx.translate(x, y)
+    ctx.scale(ww / 2, hh / 2)
+    ctx.arc(0, 0, 1, 0, 2 * math.pi)
+    ctx.restore()
+    ctx.set_source_rgba(*c, 0.10 * a)
+    ctx.fill_preserve()
+    gstroke(ctx, c, 3.0, a, glow=0.8)
+    n = 7
+    for k in range(n):
+        cx = x - ww * 0.36 + k * ww * 0.72 / (n - 1)
+        top = (k % 2 == 0)
+        ln = hh * 0.62 * (1 - 0.7 * swell)
+        y0 = y - hh * 0.40 if top else y + hh * 0.40
+        y1 = y0 + (ln if top else -ln)
+        ctx.move_to(cx, y0)
+        ctx.curve_to(cx + 10, lerp(y0, y1, 0.4), cx - 10, lerp(y0, y1, 0.7), cx, y1)
+        gstroke(ctx, c, 2.0, a * (0.75 - 0.45 * swell), glow=0)
+
+
+def draw_dnaros(ctx, gt, g, a, acc, t):
+    dur = line_dur(g)
+    heading(ctx, gt, a, "DNA损伤与活性氧", "DNA DAMAGE & REACTIVE OXYGEN SPECIES")
+    cx, cy = 960, 510
+    k = smooth(gt / 1.0)
+    hit = 1.3
+    brk = ease_out((gt - hit) / 0.8)
+    helix(ctx, cx, cy, 1300, t * 0.3, a * k, gap=110 * brk)
+    wave_ray(ctx, cx - 300, 160, cx, cy - 10, ease_io((gt - 0.3) / (hit - 0.3)), a * (1 - brk), t=t)
+    if brk > 0:
+        spark(ctx, cx, cy, 46 * (1 - 0.5 * brk), ROS_C, a * (1 - smooth((gt - hit - 1.2) / 1.0)))
+    ros = smooth((gt - hit - 0.5) / 1.0)
+    rnd = random.Random(5)
+    for j in range(16):
+        ang, d = rnd.uniform(0, 6.28), rnd.uniform(170, 330)
+        x = cx + math.cos(ang + t * 0.04) * d * 2.2
+        y = cy + math.sin(ang + t * 0.04) * d * 0.62
+        if abs(y - cy) < 70:
+            y += 90 if y > cy else -90
+        spark(ctx, x, y, 12 + 3 * math.sin(t * 3 + j), ROS_C, a * ros * (0.6 + 0.4 * math.sin(t * 2 + j)),
+              rot=t + j)
+    label_pair(ctx, 330, 330, "活性氧 ROS", "Reactive oxygen species", a * ros, 34, 20, zc=ROS_C)
+    label_pair(ctx, 1500, 360, "双链断裂", "Double-strand break", a * brk, 32, 20, zc=DNA_B)
+    resp = smooth((gt - dur * 0.55) / 1.0)
+    if resp > 0:
+        for j in range(10):
+            side = -1 if j % 2 else 1
+            ang = j * 0.7 + t * 0.5
+            rr = 40 + 18 * math.sin(t * 1.1 + j)
+            x = cx + side * (70 + 10 * (j % 3)) + math.cos(ang) * rr * (1 - 0.6 * resp)
+            y = cy + math.sin(ang) * rr
+            glow_dot(ctx, x, y, 18, PROT_C, a * resp)
+        label_pair(ctx, cx, cy + 200, "启动损伤应答", "DNA-damage response switched on", a * resp, 36, 22,
+                   zc=PROT_C)
+
+
+def draw_fate(ctx, gt, g, a, acc, t):
+    dur = line_dur(g)
+    heading(ctx, gt, a, "细胞的两种命运", "TWO FATES OF A DAMAGED CELL", y=190)
+    k = smooth(gt / 0.8)
+    top = (960, 340)
+    cell(ctx, *top, 70, t, ENDO_C, a * k, seed=2)
+    spark(ctx, top[0] + 20, top[1] - 10, 16, ROS_C, a * k * 0.8, t)
+    blit(ctx, text("受损细胞  damaged cell", "sans_light", 20, SOFT, tracking=1), top[0], top[1] + 100, a * k)
+    L, R = (520, 530), (1400, 530)
+    for i, (dst, start) in enumerate(((L, dur * 0.08), (R, dur * 0.42))):
+        pk = ease_io((gt - start) / 0.8)
+        if pk <= 0:
+            continue
+        sx, sy = top[0] + (-90 if i == 0 else 90), top[1] + 40
+        ex, ey = dst[0] + (120 if i == 0 else -170), dst[1] - 90
+        ctx.move_to(sx, sy)
+        ctx.line_to(lerp(sx, ex, pk), lerp(sy, ey, pk))
+        gstroke(ctx, acc, 2.4, a * 0.8, glow=0.5)
+    die = smooth((gt - dur * 0.15) / 2.2)
+    kl = smooth((gt - dur * 0.1) / 0.6)
+    cell(ctx, L[0], L[1], 90, t, lerp3(ENDO_C, GREY_C, die), a * kl * (1 - 0.75 * die), seed=4, nucleus=die < 0.5)
+    rnd = random.Random(8)
+    for j in range(12):
+        ang = rnd.uniform(0, 6.28)
+        d = 60 + 110 * die * rnd.uniform(0.6, 1.0)
+        glow_dot(ctx, L[0] + math.cos(ang) * d, L[1] + math.sin(ang) * d, rnd.uniform(8, 14), GREY_C,
+                 a * kl * die * 0.8)
+    label_pair(ctx, L[0], L[1] + 150, "扛不住：细胞死亡", "Can't cope: cell death", a * kl, 34, 20, zc=GREY_C)
+    kr = smooth((gt - dur * 0.45) / 0.8)
+    cell(ctx, R[0], R[1], 120 + 10 * kr, t, SEN_C, a * kr, seed=6, glow=0.6)
+    sasp = smooth((gt - dur * 0.62) / 0.8)
+    for j in range(14):
+        ph = (gt * 0.18 + j / 14) % 1
+        ang = j * 2 * math.pi / 14 + 0.3
+        d = 140 + ph * 230
+        c = ROS_C if j % 2 else FIB_C
+        glow_dot(ctx, R[0] + math.cos(ang) * d, R[1] + math.sin(ang) * d * 0.7, 11, c,
+                 a * sasp * math.sin(ph * math.pi))
+    label_pair(ctx, R[0], R[1] + 170, "扛住了：进入衰老", "Survives: becomes senescent", a * kr, 34, 20, zc=SEN_C)
+    blit(ctx, text("长期分泌促炎、促纤维化信号  ·  long-term pro-inflammatory, pro-fibrotic signals",
+                   "sans_light", 22, SOFT, tracking=1), 960, 790, a * sasp)
+
+
+def draw_reserve(ctx, gt, g, a, acc, t):
+    dur = line_dur(g)
+    heading(ctx, gt, a, "储备卫星细胞", "RESERVE SATELLITE CELLS", y=190)
+    k = smooth(gt / 0.8)
+    fy = 560
+    fiber_long(ctx, 220, 1700, fy, 120, t, a * k, 0.35, seed=7)
+    xs = [330 + i * 210 for i in range(7)]
+    res = 3
+    lose = smooth((gt - dur * 0.12) / 1.2)
+    glow_r = smooth((gt - dur * 0.3) / 0.8)
+    refill = clamp((gt - dur * 0.55) / (dur * 0.4))
+    for i, x in enumerate(xs):
+        y = fy - 66
+        if i == res:
+            sat_cell(ctx, x, y, a * k, SAT_C, w=50, glow=1 + glow_r)
+            glow_dot(ctx, x, y, 110, SAT_C, a * glow_r * 0.35)
+            continue
+        order = abs(i - res)
+        back = smooth((refill * 3.2 - (order - 1)) / 1.0)
+        if back < 1:
+            sat_cell(ctx, x, y, a * k * (1 - 0.8 * lose) * (1 - back), lerp3(SAT_C, GREY_C, lose), w=46,
+                     glow=1 - lose)
+            if lose > 0.3 and back == 0:
+                ctx.move_to(x - 12, y - 30)
+                ctx.line_to(x + 12, y - 54)
+                ctx.move_to(x + 12, y - 30)
+                ctx.line_to(x - 12, y - 54)
+                gstroke(ctx, ROS_C, 2.6, a * lose, glow=0.4)
+        if back > 0:
+            sx = lerp(xs[res], x, ease_io(min(1, back * 1.4)))
+            sat_cell(ctx, sx, y, a * k * back, SAT_C, w=46)
+    label_pair(ctx, xs[res], fy - 200, "活性氧更低 · 更耐辐射", "Lower ROS · more radiation-tolerant", a * glow_r,
+               32, 20, zc=SAT_C)
+    label_pair(ctx, 960, fy + 140, "多数卫星细胞减少", "Most satellite cells are lost", a * lose * (1 - smooth(refill * 3)),
+               30, 20, zc=GREY_C)
+    label_pair(ctx, 960, fy + 140, "克隆扩增，重新补齐干细胞池", "Clonal expansion refills the stem-cell pool",
+               a * smooth(refill * 3), 32, 20, zc=SAT_C)
+    model_tag(ctx, "小鼠谱系示踪", "MOUSE LINEAGE TRACING", a * k, y=800)
+
+
+def draw_fap(ctx, gt, g, a, acc, t):
+    dur = line_dur(g)
+    heading(ctx, gt, a, "成纤维脂肪祖细胞（FAP）", "FIBRO-ADIPOGENIC PROGENITORS", y=190)
+    k = smooth(gt / 0.8)
+    L, R = (520, 440), (1400, 440)
+    spindle(ctx, L[0], L[1], 230, -0.25 + 0.05 * math.sin(t * 0.6), FIB_C, a * k)
+    for j in range(5):
+        ph = (gt * 0.25 + j / 5) % 1
+        glow_dot(ctx, L[0] + 120 + ph * 60, L[1] - 60 + j * 30, 8, FIB_C, a * k * math.sin(ph * math.pi))
+    label_pair(ctx, L[0], L[1] + 130, "正常：帮助修复", "Normally: supports repair", a * k, 32, 20, zc=FIB_C)
+    s = ease_out((gt - dur * 0.35) / 1.0)
+    ctx.move_to(780, 440)
+    ctx.line_to(lerp(780, 1120, s), 440)
+    gstroke(ctx, acc, 2.6, a * s, glow=0.6)
+    for i in range(2):
+        wave_ray(ctx, 840 + i * 140, 260, 940 + i * 140, 410, ease_io((gt - dur * 0.3 - i * 0.2) / 0.9),
+                 a * (1 - smooth((gt - dur * 0.55) / 0.5)), t=t)
+    sen = smooth((gt - dur * 0.45) / 1.2)
+    fib = smooth((gt - dur * 0.6) / 1.4)
+    rnd = random.Random(14)
+    for j in range(int(40 * fib)):
+        ang = rnd.uniform(-0.6, 0.6) + (math.pi if j % 2 else 0)
+        d = rnd.uniform(130, 300)
+        x, y = R[0] + math.cos(ang) * d, R[1] + math.sin(ang) * d * 0.8 + rnd.uniform(-60, 60)
+        wavy_line(ctx, x - 40, y, x + 40, y + rnd.uniform(-10, 10), 4, 18, j)
+        gstroke(ctx, COLL_C, 1.7, a * 0.6, glow=0.3)
+    spindle(ctx, R[0], R[1], 250, -0.25, lerp3(FIB_C, SEN_C, sen), a * s, act=sen)
+    blit(ctx, text("衰老", "sans_med", 24, SEN_C), R[0] + 40, R[1] - 90, a * sen)
+    label_pair(ctx, R[0], R[1] + 130, "照射后：衰老 → 纤维化表型", "After irradiation: senescence → fibrotic phenotype",
+               a * s, 32, 20, zc=acc)
+    model_tag(ctx, "小鼠 · 单侧后肢 16 Gy · 第56天出现纤维化", "MOUSE · ONE HINDLIMB 16 GY · FIBROSIS BY DAY 56",
+              a * smooth((gt - 0.6) / 0.8), y=715)
+
+
+def draw_secretome(ctx, gt, g, a, acc, t):
+    dur = line_dur(g)
+    heading(ctx, gt, a, "再生被卡住", "REGENERATION STALLS", y=190)
+    k = smooth(gt / 0.8)
+    fx, fy = 360, 480
+    spindle(ctx, fx, fy, 230, -0.2, SEN_C, a * k, act=0.6)
+    label_pair(ctx, fx, fy + 150, "衰老的FAP", "Senescent FAP", a * k, 32, 20, zc=SEN_C)
+    flow = smooth((gt - 0.6) / 0.8)
+    for j in range(10):
+        ph = (gt * 0.22 + j / 10) % 1
+        x = lerp(fx + 130, 1000, ph)
+        y = fy + 60 * math.sin(j * 1.7 + ph * 3)
+        glow_dot(ctx, x, y, 10, acc, a * flow * math.sin(ph * math.pi))
+    blit(ctx, text("分泌物  secreted factors", "sans_light", 20, acc, tracking=1), 700, 380, a * flow)
+    block = smooth((gt - dur * 0.4) / 1.0)
+    mx = [1120, 1260, 1400, 1540]
+    pull = 0.5 + 0.5 * math.sin(gt * 1.6)
+    for i, x in enumerate(mx):
+        target = 1330 + (i - 1.5) * 70
+        ox = lerp(x, target, pull * (1 - 0.75 * block) * smooth(gt / 1.5))
+        cell(ctx, ox, fy, 46, t + i, lerp3(SAT_C, GREY_C, block * 0.6), a * k, seed=40 + i, nucleus=False,
+             glow=0.6)
+        glow_dot(ctx, ox, fy, 14, SAT_C, a * k * 0.7)
+    rrect(ctx, 1080, fy - 70, 500, 140, 70)
+    ctx.set_dash([10, 12])
+    gstroke(ctx, SOFT, 1.6, a * k * 0.6, glow=0)
+    ctx.set_dash([])
+    blit(ctx, text("肌管  myotube", "sans_light", 20, SOFT, tracking=1), 1330, fy - 100, a * k)
+    if block > 0:
+        cx, cy = 1330, fy
+        ctx.move_to(cx - 40, cy - 40)
+        ctx.line_to(cx + 40, cy + 40)
+        ctx.move_to(cx + 40, cy - 40)
+        ctx.line_to(cx - 40, cy + 40)
+        gstroke(ctx, ROS_C, 5, a * block, glow=0.6)
+    label_pair(ctx, 1330, fy + 150, "卫星细胞分化与融合受抑制", "Satellite-cell differentiation & fusion inhibited",
+               a * block, 32, 20, zc=ROS_C)
+    model_tag(ctx, "小鼠研究", "IN MICE", a * k, y=790)
+
+
+SC_CLUSTERS = (("卫星细胞", "Satellite cells", SAT_C, (620, 420)),
+               ("FAP", "FAPs", FIB_C, (1000, 360)),
+               ("内皮细胞", "Endothelial cells", ENDO_C, (1340, 470)),
+               ("巨噬细胞", "Macrophages", IMM_C, (820, 640)),
+               ("其他驻留细胞", "Other resident cells", (0.85, 0.70, 0.95), (1200, 680)))
+
+
+def _cluster_pts():
+    rnd = random.Random(31)
+    return [[(cx + rnd.gauss(0, 55), cy + rnd.gauss(0, 38)) for _ in range(60)]
+            for (_, _, _, (cx, cy)) in SC_CLUSTERS]
+
+
+SC_PTS = _cluster_pts()
+
+
+def draw_scseq(ctx, gt, g, a, acc, t):
+    dur = line_dur(g)
+    heading(ctx, gt, a, "单细胞测序", "SINGLE-CELL RNA-SEQ", y=190)
+    ctx.move_to(420, 780)
+    ctx.line_to(420, 300)
+    ctx.move_to(420, 780)
+    ctx.line_to(1560, 780)
+    gstroke(ctx, SOFT, 1.4, a * 0.4, glow=0)
+    blit(ctx, text("UMAP", "sans_light", 16, SOFT, tracking=3), 470, 800, a * 0.6)
+    for ci, (zh, en, c, (cx, cy)) in enumerate(SC_CLUSTERS):
+        kc = smooth((gt - 0.2 - ci * 0.25) / 0.8)
+        p21 = smooth((gt - dur * 0.4 - ci * 0.35) / 0.7)
+        col = lerp3(c, ROS_C, 0.45 * p21)
+        for (x, y) in SC_PTS[ci]:
+            ctx.arc(x, y, 5, 0, 2 * math.pi)
+            ctx.set_source_rgba(*col, 0.75 * a * kc)
+            ctx.fill()
+        blit(ctx, text(zh, "sans_med", 24, c), cx, cy + 92, a * kc)
+        if p21 > 0:
+            bx, by = cx + 70, cy - 62
+            glass_panel(ctx, bx - 38, by - 20, 76, 40, 14, a * p21, ROS_C, 0.8)
+            blit(ctx, text("p21", "sans_med", 22, ROS_C), bx, by - 2, a * p21)
+    blit(ctx, text("持续的 p21 (Cdkn1a) 衰老标记  ·  persistent p21 senescence signature", "sans_light", 24,
+                   ROS_C, tracking=1), 990, 835, a * smooth((gt - dur * 0.75) / 0.8))
+    model_tag(ctx, "小鼠肌肉", "MOUSE MUSCLE", a * smooth(gt / 0.8), x=1660, y=760)
+
+
+def draw_tgfb(ctx, gt, g, a, acc, t):
+    dur = line_dur(g)
+    heading(ctx, gt, a, "巨噬细胞 → TGF-β → FAP → 瘢痕", "MACROPHAGE → TGF-β → FAP → SCAR", y=190)
+    k = smooth(gt / 0.8)
+    mx, my = 360, 490
+    immune(ctx, mx, my, 80 + 4 * math.sin(t * 2), t, a * k, seed=12)
+    label_pair(ctx, mx, my + 160, "巨噬细胞", "Macrophage", a * k, 32, 20, zc=IMM_C)
+    sig = smooth((gt - 0.8) / 0.8)
+    fx, fy = 900, 490
+    for j in range(9):
+        ph = (gt * 0.3 + j / 9) % 1
+        x = lerp(mx + 100, fx - 140, ph)
+        y = my + 30 * math.sin(j * 2.1 + ph * 4)
+        glow_dot(ctx, x, y, 11, acc, a * sig * math.sin(ph * math.pi))
+    blit(ctx, text("TGF-β", "sans_med", 30, acc, tracking=2), (mx + fx) / 2, my - 70, a * sig)
+    blit(ctx, text("→ TGF-βR2", "sans_light", 18, SOFT, tracking=1), (mx + fx) / 2, my - 36, a * sig)
+    act = smooth((gt - dur * 0.3) / 1.0)
+    spindle(ctx, fx, fy, 230, 0.0, FIB_C, a * k, act=act)
+    label_pair(ctx, fx, fy + 160, "FAP", "Main source of ECM", a * k, 32, 20, zc=FIB_C)
+    ecm = smooth((gt - dur * 0.4) / max(1.5, dur * 0.5))
+    rnd = random.Random(19)
+    for j in range(int(90 * ecm)):
+        x, y = rnd.uniform(1200, 1720), rnd.uniform(330, 650)
+        ang = rnd.uniform(-0.7, 0.7)
+        L = rnd.uniform(50, 120)
+        wavy_line(ctx, x - math.cos(ang) * L / 2, y - math.sin(ang) * L / 2,
+                  x + math.cos(ang) * L / 2, y + math.sin(ang) * L / 2, 4, 20, j)
+        gstroke(ctx, COLL_C, 1.8, a * 0.6, glow=0.3)
+    ctx.move_to(fx + 140, fy)
+    ctx.line_to(lerp(fx + 140, 1180, act), fy)
+    gstroke(ctx, acc, 2.4, a * act * 0.8, glow=0.5)
+    label_pair(ctx, 1460, fy + 160, "瘢痕基质（细胞外基质）", "Scar matrix (ECM)", a * ecm, 32, 20, zc=COLL_C)
+    blit(ctx, text("纤维化由此固化  ·  fibrosis locks in", "serif", 30, WHITE, tracking=2), 960, 790,
+         a * smooth((gt - dur * 0.75) / 0.8))
+    model_tag(ctx, "小鼠", "MOUSE", a * k, x=1700, y=260)
+
+
+def draw_mito(ctx, gt, g, a, acc, t):
+    dur = line_dur(g)
+    heading(ctx, gt, a, "电镜下的损伤", "UNDER THE ELECTRON MICROSCOPE", y=190)
+    k = smooth(gt / 0.8)
+    sw = smooth((gt - 0.6) / 2.0)
+    glass_panel(ctx, 230, 290, 640, 420, 28, a * k)
+    mitochondrion(ctx, 550, 470, 380, 150, MITO_C, a * k, swell=sw, t=t)
+    label_pair(ctx, 550, 640, "线粒体肿胀", "Swollen mitochondria", a * k, 32, 20, zc=MITO_C)
+    kr = smooth((gt - dur * 0.3) / 0.8)
+    glass_panel(ctx, 1050, 290, 640, 420, 28, a * kr)
+    vx, vy, vr = 1370, 470, 120
+    dmg = smooth((gt - dur * 0.4) / 1.2)
+    for e in range(6):
+        a0 = e * math.pi / 3 + 0.15 * dmg
+        a1 = a0 + math.pi / 3 - 0.35 * dmg
+        ctx.new_path()
+        ctx.arc(vx, vy, vr, a0, a1)
+        gstroke(ctx, lerp3(ENDO_C, GREY_C, dmg * 0.7), 10, a * kr, glow=0.5)
+        mid = (a0 + a1) / 2
+        glow_dot(ctx, vx + math.cos(mid) * vr, vy + math.sin(mid) * vr, 10, ENDO_C, a * kr * (1 - 0.5 * dmg))
+    for j in range(4):
+        ctx.save()
+        ctx.translate(vx + math.cos(j * 1.6 + t * 0.3) * 45, vy + math.sin(j * 1.6 + t * 0.3) * 45)
+        ctx.scale(1.0, 0.6)
+        ctx.arc(0, 0, 18, 0, 2 * math.pi)
+        ctx.restore()
+        ctx.set_source_rgba(*VES_C, 0.55 * a * kr)
+        ctx.fill()
+    for j in range(12):
+        gap = j % 6 * math.pi / 3 + math.pi / 6
+        ph = (gt * 0.35 + j / 12) % 1
+        d = vr - 10 + ph * 150
+        glow_dot(ctx, vx + math.cos(gap) * d, vy + math.sin(gap) * d, 8, VES_C, a * dmg * math.sin(ph * math.pi))
+    label_pair(ctx, 1370, 640, "内皮损伤 · 通透性升高", "Endothelial damage · leakier vessel", a * kr, 32, 20,
+               zc=ENDO_C)
+    model_tag(ctx, "大鼠模型 · 电镜观察", "RAT MODEL · ELECTRON MICROSCOPY", a * k, y=790)
+
+
+def draw_monkey(ctx, gt, g, a, acc, t):
+    dur = line_dur(g)
+    heading(ctx, gt, a, "灵长类的长期证据", "LONG-TERM EVIDENCE IN PRIMATES", y=190)
+    k = smooth(gt / 0.8)
+    icon_at(ctx, lambda: icon_monkey(ctx, (0.95, 0.85, 0.75), 1), 400, 470, 1.15, a * k)
+    blit(ctx, text("恒河猴  rhesus macaque", "sans_light", 22, SOFT, tracking=1), 400, 620, a * k)
+    x0, x1, y = 720, 1700, 400
+    prog = ease_io((gt - 0.6) / max(1.5, dur * 0.45))
+    ctx.move_to(x0, y)
+    ctx.line_to(x1, y)
+    gstroke(ctx, SOFT, 1.6, a * k * 0.35, glow=0)
+    ctx.move_to(x0, y)
+    ctx.line_to(lerp(x0, x1, prog), y)
+    gstroke(ctx, acc, 3.0, a * k, glow=0.7)
+    glow_dot(ctx, lerp(x0, x1, prog), y, 26, acc, a * k * smooth(prog * 6))
+    for yr in range(5):
+        x = lerp(x0, x1, yr / 4)
+        ctx.move_to(x, y - 10)
+        ctx.line_to(x, y + 10)
+        gstroke(ctx, SOFT, 1.6, a * k * 0.6, glow=0)
+        blit(ctx, text(f"{yr}", "sans_light", 20, SOFT), x, y + 34, a * k * 0.8)
+    blit(ctx, text("年  years", "sans_light", 18, SOFT, tracking=2), x1 + 40, y + 34, a * k * 0.8)
+    label_pair(ctx, x0, y - 70, "全身照射", "Whole-body irradiation", a * k, 28, 18, zc=RAY_C)
+    label_pair(ctx, x1, y - 70, "约4年后", "~4 years later", a * smooth((prog - 0.85) / 0.15), 28, 18, zc=acc)
+    for i, (zh, en, c) in enumerate((("胰岛素抵抗", "Insulin resistance", acc),
+                                     ("线粒体异常", "Mitochondrial abnormalities", MITO_C))):
+        kk = ease_out((gt - dur * (0.6 + 0.12 * i)) / 0.8)
+        bx, by = 1000 + i * 420, 600
+        glass_panel(ctx, bx - 190, by - 56, 380, 112, 22, a * kk, c, 0.5)
+        label_pair(ctx, bx, by - 12, zh, en, a * kk, 34, 20, zc=c)
+    model_tag(ctx, "非人灵长类", "NONHUMAN PRIMATE", a * k, x=400, y=760)
+
+
+CASCADE = (("DNA与活性氧", "DNA damage & ROS", ROS_C, "DNA与"),
+           ("死亡或衰老", "Death or senescence", GREY_C, "死亡或"),
+           ("干细胞与FAP龛位失衡", "Stem-cell & FAP niche imbalance", SAT_C, "干细胞与"),
+           ("血管炎症重塑", "Vascular & inflammatory remodeling", VES_C, "血管炎"),
+           ("纤维化", "Fibrosis", FIB_C, "最后是"))
 
 
 def mini_icon(ctx, i, x, y, c, a, t):
@@ -1246,9 +1304,10 @@ def mini_icon(ctx, i, x, y, c, a, t):
         for q in range(4):
             glow_dot(ctx, x + math.cos(q * 1.6) * 44, y + math.sin(q * 1.6) * 44, 7, c, a * 0.7)
     elif i == 2:
-        sat_cell(ctx, x, y + 6, a, c, w=36)
-        ctx.move_to(x - 30, y - 30)
-        ctx.line_to(x + 30, y + 30)
+        sat_cell(ctx, x - 14, y - 18, a, c, w=32)
+        spindle(ctx, x + 12, y + 24, 70, -0.3, FIB_C, a)
+        ctx.move_to(x - 44, y - 44)
+        ctx.line_to(x + 44, y + 44)
         gstroke(ctx, ROS_C, 3, a)
     elif i == 3:
         ctx.move_to(x - 48, y - 16)
@@ -1300,103 +1359,68 @@ def draw_cascade(ctx, gt, g, a, acc, t):
         label_pair(ctx, x, y + 124, zh, en, a * kk, 28, 17, zc=WHITE)
 
 
-def draw_whole(ctx, gt, g, a, acc, t):
-    dur = line_dur(g)
-    k = ease_out(gt / 1.0)
-    glass_panel(ctx, 200, 300, 560, 420, 28, a * k)
-    fiber_long(ctx, 260, 700, 500, 90, t, a * k, 0.3, seed=2)
-    label_pair(ctx, 480, 640, "只看一条肌纤维", "Just one fiber", a * k, 32, 20)
-    ctx.move_to(450, 360)
-    ctx.line_to(510, 420)
-    ctx.move_to(510, 360)
-    ctx.line_to(450, 420)
-    gstroke(ctx, ROS_C, 4, a * smooth((gt - dur * 0.35) / 0.6), glow=0.5)
-    kw = ease_out((gt - dur * 0.4) / 1.0)
-    ctx.move_to(800, 510)
-    ctx.line_to(lerp(800, 960, kw), 510)
-    gstroke(ctx, acc, 3, a * kw, glow=0.6)
-    SECTION.draw(ctx, 1350, 500, t, a * kw, dmg=0.25, scale=0.78,
-                 hi={"cap": 0.5, "sat": 0.6, "fibro": 0.6})
-    label_pair(ctx, 1350, 790, "看整个微环境", "The whole microenvironment", a * kw, 36, 22, zc=acc)
-
-
 def draw_directions(ctx, gt, g, a, acc, t):
     dur = line_dur(g)
-    heading(ctx, gt, a, "候选研究方向", "CANDIDATE RESEARCH DIRECTIONS", y=190)
-    items = (("氧化应激", "Oxidative stress", ROS_C), ("血管修复", "Vascular repair", VES_C),
-             ("抗纤维化", "Anti-fibrosis", FIB_C), ("干细胞龛保护", "Stem-cell niche", SAT_C))
+    heading(ctx, gt, a, "值得盯住的机制节点", "MECHANISMS WORTH WATCHING", y=190)
+    items = (("卫星细胞储备群", "Reserve satellite-cell pool", SAT_C),
+             ("FAP 衰老", "FAP senescence", FIB_C),
+             ("巨噬细胞–TGF-β–FAP 轴", "Macrophage–TGF-β–FAP axis", IMM_C),
+             ("长期线粒体与代谢改变", "Long-term mitochondria & metabolism", MITO_C))
     for i, (zh, en, c) in enumerate(items):
-        kk = ease_out((gt - 0.6 - dur * 0.17 * i) / 0.8)
+        kk = ease_out((gt - 0.6 - dur * 0.16 * i) / 0.8)
         if kk <= 0:
             continue
-        x, y = 960 + (i - 1.5) * 390, 510 + (1 - kk) * 30
-        glass_panel(ctx, x - 165, y - 190, 330, 360, 26, a * kk, c, 0.35)
+        x, y = 960 + (i - 1.5) * 420, 500 + (1 - kk) * 30
+        glass_panel(ctx, x - 190, y - 190, 380, 360, 26, a * kk, c, 0.35)
         ia = a * kk
         iy = y - 60
         if i == 0:
-            spark(ctx, x, iy, 50, c, ia, t * 0.4)
+            fiber_long(ctx, x - 130, x + 130, iy + 30, 50, t, ia)
+            sat_cell(ctx, x, iy - 4, ia, c, w=40, glow=1.6)
+            glow_dot(ctx, x, iy - 4, 80, c, ia * 0.3)
         elif i == 1:
-            capillary_h(ctx, x - 110, x + 110, iy, 70, t, ia, dead=0.0, seed=6)
+            spindle(ctx, x, iy, 190, -0.25, lerp3(FIB_C, SEN_C, 0.6), ia, act=0.6)
+            blit(ctx, text("p21", "sans_med", 22, ROS_C), x + 60, iy - 56, ia)
         elif i == 2:
-            for q in range(4):
-                wavy_line(ctx, x - 80, iy - 36 + q * 24, x + 80, iy - 36 + q * 24, 5, 26, q)
-                gstroke(ctx, COLL_C, 2.0, ia * 0.7, glow=0.3)
-            ctx.arc(x, iy, 76, 0, 2 * math.pi)
-            ctx.move_to(x - 54, iy + 54)
-            ctx.line_to(x + 54, iy - 54)
-            gstroke(ctx, c, 3.4, ia)
+            immune(ctx, x - 100, iy, 34, t, ia, seed=5)
+            for j in range(4):
+                ph = (gt * 0.4 + j / 4) % 1
+                glow_dot(ctx, lerp(x - 60, x + 20, ph), iy, 7, acc, ia * math.sin(ph * math.pi))
+            spindle(ctx, x + 80, iy, 110, 0.0, FIB_C, ia, act=0.5)
         else:
-            fiber_long(ctx, x - 120, x + 120, iy + 26, 50, t, ia)
-            sat_cell(ctx, x, iy, ia, c, w=40)
-            ctx.arc(x, iy, 62, math.pi * 1.05, math.pi * 1.95)
-            gstroke(ctx, c, 3.0, ia)
-        label_pair(ctx, x, y + 90, zh, en, ia, 34, 20, zc=c)
-    kd = smooth((gt - dur * 0.7) / 0.8)
-    blit(ctx, text("这些是研究方向，不是医疗建议  ·  research directions, not medical advice", "sans_light", 24,
-                   SOFT, tracking=1), 960, 770, a * kd)
-
-
-def draw_reality(ctx, gt, g, a, acc, t):
-    dur = line_dur(g)
-    heading(ctx, gt, a, "结果取决于条件", "CONTEXT CHANGES THE OUTCOME", y=180)
-    items = (("剂量", "Dose", lambda: icon_gauge(ctx, acc, 1, 0.5 + 0.3 * math.sin(t))),
-             ("分割方式", "Fractionation", lambda: icon_fractions(ctx, acc, 1)),
-             ("照射范围", "Irradiated volume", lambda: icon_target(ctx, acc, 1)),
-             ("伤后时间", "Time since exposure", lambda: icon_clock(ctx, acc, 1, t)))
-    for i, (zh, en, fn) in enumerate(items):
-        kk = ease_out((gt - 0.4 - dur * 0.09 * i) / 0.8)
-        if kk <= 0:
-            continue
-        x, y = 960 + (i - 1.5) * 380, 380
-        glass_panel(ctx, x - 160, y - 130, 320, 280, 24, a * kk)
-        icon_at(ctx, fn, x, y - 30, 0.7, a * kk)
-        label_pair(ctx, x, y + 70, zh, en, a * kk, 30, 18)
-    km = ease_out((gt - dur * 0.55) / 0.9)
-    if km > 0:
-        icon_at(ctx, lambda: icon_mouse(ctx, (0.95, 0.85, 0.80), 1), 720, 640, 0.6, a * km)
-        blit(ctx, text("≠", "serif_bold", 80, (1.0, 0.70, 0.50)), 960, 640, a * km)
-        icon_at(ctx, lambda: icon_person(ctx, WHITE, 1), 1200, 640, 0.4, a * km)
-        blit(ctx, text("动物 animal", "sans_light", 20, SOFT), 720, 715, a * km)
-        blit(ctx, text("人体 human", "sans_light", 20, SOFT), 1200, 735, a * km)
+            mitochondrion(ctx, x, iy, 200, 90, c, ia, swell=0.35 + 0.15 * math.sin(t), t=t)
+        label_pair(ctx, x, y + 90, zh, en, ia, 28, 18, zc=c)
+    kd = smooth((gt - dur * 0.75) / 0.8)
+    blit(ctx, text("这些是研究方向，不是医疗建议  ·  research directions, not medical advice", "sans_light", 22,
+                   SOFT, tracking=1), 960, 760, a * kd)
 
 
 def draw_end(ctx, gt, g, a, acc, t):
     line = g["lines"][0]
-    SECTION.draw(ctx, 960, 480, t, a * 0.22 * smooth(gt / 2), dmg=0.3, scale=1.3)
-    blit_reveal(ctx, text("一句话总结  ·  IN ONE SENTENCE", "sans_light", 24, acc, tracking=6), 960, 240,
+    SECTION.draw(ctx, 960, 480, t, a * 0.20 * smooth(gt / 2), dmg=0.3, scale=1.3)
+    blit_reveal(ctx, text("一句话总结  ·  IN ONE SENTENCE", "sans_light", 24, acc, tracking=6), 960, 210,
                 ease_out((gt - 0.2) / 1.2), a)
-    blit_reveal(ctx, text("伤的是细胞，更是它的环境", "serif", 84, WHITE, tracking=8), 960, 350,
-                ease_out((gt - 0.5) / 1.8), a)
-    blit_reveal(ctx, text("Radiation injures not just muscle cells, but the niche they depend on.",
-                          "serif_light", 34, (0.90, 0.95, 0.98), tracking=1), 960, 455,
-                ease_out((gt - 1.3) / 1.6), a)
-    kd = ease_out((t - line["start"] - 4.2) / 1.2)
+    blit_reveal(ctx, text("理解这条链", "serif", 88, WHITE, tracking=10), 960, 320,
+                ease_out((gt - 0.4) / 1.6), a)
+    blit_reveal(ctx, text("是后续干预和实验设计的起点", "serif_light", 46, WHITE, tracking=4), 960, 420,
+                ease_out((gt - 0.8) / 1.6), a)
+    blit_reveal(ctx, text("Understanding this chain is the starting point for interventions and experimental design.",
+                          "serif_light", 28, (0.90, 0.95, 0.98), tracking=1), 960, 490,
+                ease_out((gt - 1.2) / 1.6), a)
+    for i, (zh, en, c, key) in enumerate(CASCADE):
+        kk = ease_out((gt - 1.0 - 0.18 * i) / 0.7)
+        x = 960 + (i - 2) * 300
+        glass_panel(ctx, x - 135, 560, 270, 64, 18, a * kk, c, 0.6)
+        blit(ctx, text(zh, "sans_med", 22, c), x, 590, a * kk)
+        if i:
+            blit(ctx, text("→", "sans", 24, acc), x - 150, 590, a * kk)
+    kd = ease_out((t - line["start"] - 2.0) / 1.0)
     if kd > 0:
-        y = 680 + (1 - kd) * 20
-        glass_panel(ctx, 960 - 470, y - 85, 940, 170, 24, a * kd, acc, 0.45)
-        blit(ctx, text("本视频仅供科普", "sans_med", 42, WHITE, tracking=4), 960, y - 22, a * kd)
-        blit(ctx, text("For education only. Not medical advice.", "sans_light", 26, SOFT, tracking=2), 960,
-             y + 34, a * kd)
+        y = 760 + (1 - kd) * 20
+        glass_panel(ctx, 960 - 420, y - 70, 840, 140, 24, a * kd, acc, 0.45)
+        blit(ctx, text("本视频仅供科普", "sans_med", 40, WHITE, tracking=4), 960, y - 18, a * kd)
+        blit(ctx, text("For education only. Not medical advice.", "sans_light", 24, SOFT, tracking=2), 960,
+             y + 30, a * kd)
 
 
 def draw_refs(ctx, gt, g, a, acc, t):
@@ -1405,29 +1429,28 @@ def draw_refs(ctx, gt, g, a, acc, t):
     ctx.move_to(960 - 300, 172)
     ctx.line_to(960 + 300, 172)
     gstroke(ctx, acc, 1.2, a * ease_io((gt - 0.4) / 1.0), glow=0)
-    x0, y = 230, 222
+    x0, y = 210, 205
     for i, key in enumerate(REF_ORDER):
         r = REFS[key]
-        kk = ease_out((gt - 0.6 - 0.18 * i) / 0.8)
-        num = text(f"{i + 1}", "serif_light", 34, acc, shadow=0.3)
-        blit(ctx, num, x0 - 40, y + 14, a * kk)
-        tf = text(r["full"], "sans_light", 25, WHITE, max_w=1440, align="left", line_gap=1.3, shadow=0.4)
-        td = text(f"doi: {r['doi']}   ·   PMID {r['pmid']}", "sans_light", 21, acc, tracking=1, shadow=0.4)
-        pf, pd = int(25 * 0.7), int(21 * 0.7)
+        kk = ease_out((gt - 0.6 - 0.15 * i) / 0.8)
+        num = text(f"{i + 1}", "serif_light", 28, acc, shadow=0.3)
+        blit(ctx, num, x0 - 36, y + 12, a * kk)
+        tf = text(r["full"], "sans_light", 21, WHITE, max_w=1540, align="left", line_gap=1.25, shadow=0.4)
+        td = text(f"doi: {r['doi']}   ·   PMID {r['pmid']}", "sans_light", 18, acc, tracking=1, shadow=0.4)
+        pf, pd = int(21 * 0.7), int(18 * 0.7)
         blit(ctx, tf, x0 + tf.tw / 2 - pf, y + tf.th / 2 - pf, a * kk)
         y += tf.th - 2 * pf + 4
         blit(ctx, td, x0 + td.tw / 2 - pd, y + td.th / 2 - pd, a * kk)
-        y += td.th - 2 * pd + 22
+        y += td.th - 2 * pd + 14
     blit(ctx, text("本视频仅供科普  ·  For education only", "sans", 22, SOFT, tracking=3), 960, 1030,
          a * smooth((gt - 1.6) / 1.0))
 
 
 DRAWERS = {
-    "hook": draw_hook, "title": draw_title, "ionize": draw_ionize, "dsb": draw_dsb, "ros": draw_ros,
-    "fibers": draw_fibers, "beyond": draw_beyond, "vessel": draw_vessel, "hypoxia": draw_hypoxia,
-    "fibrosis": draw_fibrosis, "remodel": draw_remodel, "clinic": draw_clinic, "cascade": draw_cascade,
-    "whole": draw_whole, "directions": draw_directions, "reality": draw_reality, "end": draw_end,
-    "refs": draw_refs,
+    "title": draw_title, "dnaros": draw_dnaros, "fate": draw_fate, "fibers": draw_fibers,
+    "reserve": draw_reserve, "fap": draw_fap, "secretome": draw_secretome, "scseq": draw_scseq,
+    "tgfb": draw_tgfb, "mito": draw_mito, "monkey": draw_monkey, "clinic": draw_clinic,
+    "cascade": draw_cascade, "directions": draw_directions, "end": draw_end, "refs": draw_refs,
 }
 
 
